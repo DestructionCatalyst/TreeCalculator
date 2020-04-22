@@ -6,6 +6,7 @@ using namespace std;
 
 class MyString : public string
 {
+public:
 	void ltrim(const std::string chars = "\t\n\v\f\r ")
 	{
 		erase(0, find_first_not_of(chars));
@@ -22,67 +23,27 @@ class MyString : public string
 	void symmetrical_trim(const std::string left = "\t\n\v\f\r ", const std::string right = "\t\n\v\f\r ")
 	{
 		while ((find_first_of(left) == 0) && (find_last_of(right) == length() - 1)) {
-		erase(0);
-		erase(length() - 1);
+			erase(0, 1);
+			erase(length() - 1, 1);
 		}
 	}
+	//Expressions in brackets will be processed later, after everything around them is processed 
 	int find_last_of_ignore_brackets(string ptr)
 	{
 		int depth = 0;
 		for (int i = length() - 1; i >= 0; i--) {
-			if (this[i] == ")")
+			if (this->c_str()[i] == ')')
 				depth++;
-			else if (this[i] == "(")
+			else if (this->c_str()[i] == '(')
 				depth--;
 			else if (depth == 0)
-				if (ptr.find(this[i]) != string::npos)
+				if (ptr.find(this->c_str()[i]) != string::npos)
 					return i;
 		}
 		return string::npos;
 	}
+	
 };
-
-std::string ltrim(std::string str, const std::string chars = "\t\n\v\f\r ")
-{
-	str.erase(0, str.find_first_not_of(chars));
-	return str;
-}
-
-std::string rtrim(std::string str, const std::string chars = "\t\n\v\f\r ")
-{
-	str.erase(str.find_last_not_of(chars) + 1);
-	return str;
-}
-
-std::string trim(std::string str, const std::string chars = "\t\n\v\f\r ")
-{
-	return ltrim(rtrim(str, chars), chars);
-}
-std::string symmetrical_trim(std::string str, const std::string left = "\t\n\v\f\r ", const std::string right = "\t\n\v\f\r ")
-{
-	while ((str.find_first_of(left) == 0) && (str.find_last_of(right) == str.length() - 1))
-		str = str.substr(1, str.length() - 2);
-	//cout << str << endl;
-	return str;
-}
-
-int find_last_of_ignore_brackets(string str, string ptr)
-{
-	int depth = 0;
-	for (int i = str.length() - 1; i >= 0; i--) {
-		if (str[i] == ')')
-			depth++;
-		else if (str[i] == '(')
-			depth--;
-		else if (depth == 0)
-			if (ptr.find(str[i]) != string::npos)
-				return i;
-	}
-	return string::npos;
-}
-
-
-
 
 class Data {
 public:
@@ -93,15 +54,17 @@ public:
 	Data* right;
 public:
 
-	Data(string eq)
+	Data(MyString& eq)
 	{
-		eq = symmetrical_trim(eq, "(", ")");
-			
+		eq.trim();
+		eq.symmetrical_trim("(", ")");
+		eq.trim();
+
 		int sign = 0;
-		sign = find_last_of_ignore_brackets(eq, "+-");
+		sign = eq.find_last_of_ignore_brackets("+-");
 
 		if (sign == string::npos)
-			sign = find_last_of_ignore_brackets(eq, "*/");
+			sign = eq.find_last_of_ignore_brackets("*/");
 
 		if (sign == string::npos) {
 			this->isSign = false;
@@ -112,8 +75,10 @@ public:
 		else {
 			this->isSign = true;
 			this->sign = eq[sign];
-			left = new Data(trim(eq.substr(0, sign )));
-			right = new Data(trim(eq.substr(sign + 1, eq.length() - 1)));
+			string leftStr = eq.substr(0, sign);
+			string rightStr = eq.substr(sign + 1, eq.length() - 1);
+			left = new Data(static_cast<MyString&>(leftStr));
+			right = new Data(static_cast<MyString&>(rightStr));
 		}
 	}
 	string Get() {
@@ -157,13 +122,15 @@ void LRN(Data** node)
 
 
 int main() {
-	string input;
+	MyString input;
 	cin >> input;
-	
-	Data* tree = new Data(trim(input));
+	input.trim();
+
+	Data* tree = new Data(input);
+	int a = 0;
 	LRN(&tree);
 	
-	cout << tree->num << endl;
+	cout << tree->Get() << endl;
 
 }
 
